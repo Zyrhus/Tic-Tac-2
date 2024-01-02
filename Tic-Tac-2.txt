@@ -1,0 +1,320 @@
+using System;
+
+class TicTac2
+{
+    static void Main(string[] args)
+    {
+        Game myGame = new Game();
+        myGame.Start();
+    }
+}
+class Menu
+{
+    private int Selectedindex;
+    private string[] Options;
+    private string Prompt;
+    public Menu(string prompt, string[] options)
+    {
+        Prompt = prompt;
+        Options = options;
+        Selectedindex = 0;
+    }
+    private void DisplayOptions()
+    {
+        Console.WriteLine(Prompt);
+        for (int i = 0; i < Options.Length; i++)
+        {
+            string currentOption = Options[i];
+            string prefix;
+            if (i == Selectedindex)
+            {
+                prefix = ">";
+                Console.ForegroundColor = ConsoleColor.Black;
+                Console.BackgroundColor = ConsoleColor.White;
+            }
+            else
+            {
+                prefix = " ";
+                Console.ForegroundColor = ConsoleColor.White;
+                Console.BackgroundColor = ConsoleColor.Black;
+            }
+            Console.WriteLine($"{prefix} << {currentOption} >>");
+        }
+        Console.ResetColor();
+    }
+    public int Run()
+    {
+        ConsoleKey keyPressed;
+        do
+        {
+            Console.Clear();
+            DisplayOptions();
+            ConsoleKeyInfo keyInfo = Console.ReadKey(true);
+            keyPressed = keyInfo.Key;
+            if (keyPressed == ConsoleKey.UpArrow)
+            {
+                Selectedindex--;
+                if (Selectedindex == -1)
+                {
+                    Selectedindex = Options.Length - 1;
+                }
+            }
+            else if (keyPressed == ConsoleKey.DownArrow)
+            {
+                Selectedindex++;
+                if (Selectedindex == Options.Length)
+                {
+                    Selectedindex = 0;
+                }
+            }
+        } while (keyPressed != ConsoleKey.Enter);
+        return Selectedindex;
+    }
+}
+class Game
+{
+    public void Start()
+    {
+        Console.Title = "TicTac2";
+        RunMainMenu();
+    }
+    private void RunMainMenu()
+    {
+        string prompt = @"
+████████╗██╗ ██████╗    ████████╗ █████╗  ██████╗     ██████╗ 
+╚══██╔══╝██║██╔════╝    ╚══██╔══╝██╔══██╗██╔════╝     ╚════██╗
+   ██║   ██║██║            ██║   ███████║██║           █████╔╝
+   ██║   ██║██║            ██║   ██╔══██║██║          ██╔═══╝ 
+   ██║   ██║╚██████╗       ██║   ██║  ██║╚██████╗     ███████╗
+   ╚═╝   ╚═╝ ╚═════╝       ╚═╝   ╚═╝  ╚═╝ ╚═════╝     ╚══════╝
+                                                       
+Welcome to the TicTac2. What would you like to do?
+Use the arrow keys to select an option.";
+        string[] options = { "Play", "Instructions", "Exit" };
+        Menu mainMenu = new Menu(prompt, options);
+        int selectedIndex = mainMenu.Run();
+        switch (selectedIndex)
+        {
+            case 0:
+                RunFirstChoice();
+                break;
+            case 1:
+                DisplayInstruction();
+                break;
+            case 2:
+                ExitGame();
+                break;
+        }
+    }
+    private void ExitGame()
+    {
+        Console.WriteLine("\nPress any key to exit...");
+        Console.ReadKey(true);
+        Environment.Exit(0);
+    }
+    private void DisplayInstruction()
+    {
+        Console.WriteLine("Rules and Instructions!\n\n" +
+            "Instructions:\n" +
+            "The game is already have 3 pieces in the board, you can\n" +
+            "still win by having them in a row and you need to move\n" +
+            "them to play. You only have 3 pieces on each player. You\n" +
+            "can't win at the start even tho it's horizontal.\n\n" +
+            "Rules:\n" +
+            "1. You can move them only 1 at a time.\n" +
+            "2. you can move it in any direction as long as it is not occupied.\n\n");
+        Console.ReadKey(true);
+        RunMainMenu();
+    }
+    private void RunFirstChoice()
+    {
+        Program Instance = new Program();
+        Instance.MainMenu();
+
+    }
+}
+class Program
+{
+    static char currentPlayer = 'X';
+    public void MainMenu()
+    {
+        Console.Clear();
+        InitializeBoard();
+        DisplayBoard();
+        while (true)
+        {
+            Console.WriteLine($"Player {currentPlayer}'s turn");
+            Console.Write("Enter the move (e.g., 'e2 e4'): ");
+            string move = Console.ReadLine();
+            if (move.ToLower() == "exit")
+            {
+                break;
+            }
+            string[] moveParts = move.Split(' ');
+            if (moveParts.Length == 2 && moveParts[0].Length == 2 && moveParts[1].Length == 2)
+            {
+                char startFile = moveParts[0][0];
+                int startRank = int.Parse(moveParts[0][1].ToString()) - 1;
+                char endFile = moveParts[1][0];
+                int endRank = int.Parse(moveParts[1][1].ToString()) - 1;
+                int startCol = startFile - 'a';
+                int endCol = endFile - 'a';
+
+                if (IsValidMove(2 - startRank, startCol, 2 - endRank, endCol))
+                {
+                    MakeMove(2 - startRank, startCol, 2 - endRank, endCol);
+                    Console.Clear();
+                    DisplayBoard();
+                    if (CheckWin())
+                    {
+                        Console.Clear();
+                        DisplayBoard();
+                        Console.WriteLine($"Player {currentPlayer} wins!");
+                        break;
+                    }
+                    if (CheckDraw())
+                    {
+                        Console.Clear();
+                        DisplayBoard();
+                        Console.WriteLine("It's a draw!");
+                        break;
+                    }
+                    SwitchPlayer();
+                }
+            }
+            else
+            {
+                Console.Clear();
+                DisplayBoard();
+                Console.WriteLine("Invalid move. Try again.");
+            }
+        }
+        PlayAgain();
+        Console.ReadKey();
+    }
+    static void PlayAgain()
+    {
+        Console.Write("Do you want to play again? \n (Y if Yes, N to return to MainMenu)");
+        string playAgain = Console.ReadLine();
+        if (playAgain == "Y")
+        {
+            Program Instance = new Program();
+            Instance.MainMenu();
+        }
+        else if (playAgain == "N")
+        {
+            Game Instance = new Game();
+            Instance.Start();
+        }
+    }
+    static char[,] board = new char[3, 3];
+    static void InitializeBoard()
+    {
+        for (int row = 0; row < 3; row++)
+        {
+            for (int col = 0; col < 3; col++)
+            { board[row, col] = ' '; }
+        }
+        for (int col = 0; col < 3; col++)
+        {
+            board[0, col] = 'X';
+            board[2, col] = 'O';
+        }
+    }
+    static void DisplayBoard()
+    {
+        Console.WriteLine("    a     b     c   ");
+        Console.WriteLine("       |     |      ");
+        Console.WriteLine($"3   {board[0, 0]}  |  {board[0, 1]}  |  {board[0, 2]}");
+        Console.WriteLine("  ___|_____|___ ");
+        Console.WriteLine("       |     |      ");
+        Console.WriteLine($"2   {board[1, 0]}  |  {board[1, 1]}  |  {board[1, 2]}");
+        Console.WriteLine("  ___|_____|___ ");
+        Console.WriteLine("       |     |      ");
+        Console.WriteLine($"1   {board[2, 0]}  |  {board[2, 1]}  |  {board[2, 2]}");
+        Console.WriteLine("       |     |      ");
+    }
+    static void SwitchPlayer()
+    {
+        currentPlayer = (currentPlayer == 'X') ? 'O' : 'X';
+    }
+    static bool IsValidMove(int startRow, int startCol, int endRow, int endCol)
+    {
+        char piece = board[startRow, startCol];
+        char targetPiece = board[endRow, endCol];
+
+        if (startRow < 0 || startRow > 3 || startCol < 0 || startCol > 3 ||
+            endRow < 0 || endRow > 3 || endCol < 0 || endCol > 3)
+        {
+            Console.Clear();
+            DisplayBoard();
+            Console.WriteLine("Invalid move: Out of bounds.");
+            return false;
+        }
+        if ((currentPlayer == 'X' && piece == 'O') || (currentPlayer == 'O' && piece == 'X'))
+        {
+            Console.Clear();
+            DisplayBoard();
+            Console.WriteLine("Invalid move: It's not your turn or you're moving the opponent's piece.");
+            return false;
+        }
+        if (currentPlayer == 'X' && targetPiece == 'O')
+        {
+            Console.Clear();
+            DisplayBoard();
+            Console.WriteLine("Invalid move: Destination square already occupied by your own piece.");
+            return false;
+        }
+        else if (currentPlayer == 'O' && targetPiece == 'X')
+        {
+            Console.Clear();
+            DisplayBoard();
+            Console.WriteLine("Invalid move: Destination square already occupied by your own piece.");
+            return false;
+        }
+        return true;
+    }
+    static void MakeMove(int startRow, int startCol, int endRow, int endCol)
+    {
+        board[endRow, endCol] = board[startRow, startCol];
+        board[startRow, startCol] = ' ';
+    }
+    static bool CheckWin()
+    {
+        if (currentPlayer == 'X')
+        {
+            if (board[2, 0] == currentPlayer && board[2, 1] == currentPlayer && board[2, 2] == currentPlayer)
+                return true;
+        }
+        if (currentPlayer == '0')
+        {
+            if (board[0, 0] == currentPlayer && board[0, 1] == currentPlayer && board[0, 2] == currentPlayer)
+                return true;
+        }
+        for (int i = 1; i < 3; i++)
+        {
+            if (board[0, i] == currentPlayer && board[1, i] == currentPlayer && board[2, i] == currentPlayer)
+                return true;
+        }
+        if (board[1, 0] == currentPlayer && board[1, 1] == currentPlayer && board[1, 2] == currentPlayer)
+            return true;
+        if (board[0, 0] == currentPlayer && board[1, 1] == currentPlayer && board[2, 2] == currentPlayer)
+            return true;
+        if (board[0, 2] == currentPlayer && board[1, 1] == currentPlayer && board[2, 0] == currentPlayer)
+            return true;
+
+        return false;
+    }
+    static bool CheckDraw()
+    {
+        for (int i = 0; i < 3; i++)
+        {
+            for (int j = 0; j < 3; j++)
+            {
+                if (board[i, j] == ' ')
+                    return false;
+            }
+        }
+        return true;
+    }
+}
